@@ -1,15 +1,10 @@
 import streamlit as st
 from random import random
 
-# set episode session state
-def select_book(isbn):
-  st.session_state['ISBN'] = isbn
-
 def tile_item(column, item):
   with column:
-    st.button('📖', key=random(), on_click=select_book, args=(item['ISBN'], ))
-    st.image(item['Image-URL-M'], use_column_width='always')
-    st.caption(item['Book-Title'])
+    st.image(item['image'])
+    st.caption(item['description'])
 
 def recommendations(df):
 
