@@ -4,6 +4,8 @@ from random import random
 def tile_item(column, item):
   with column:
     st.image(item['image'])
+    title = item['title'].split('-')[0]
+    st.subheader(title)
     st.caption(item['description'])
 
 def recommendations(df):
