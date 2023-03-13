@@ -6,6 +6,7 @@ def tile_item(column, item):
     st.image(item['image'])
     title = item['title'].split('-')[0]
     st.subheader(title)
+    st.caption(item['first_broadcast'].date())
     st.caption(item['description'])
 
 def recommendations(df):
