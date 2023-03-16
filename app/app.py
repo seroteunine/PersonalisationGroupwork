@@ -1,11 +1,14 @@
-    # Setup
+# Setup
 import streamlit as st
 import pandas as pd
 import template as t
 from data_import import data_import
 import authenticate as a
 import json
+import random
 df = data_import()
+df.reset_index(inplace=True)
+df['content_id'] = df.index
 
 N_ITEMS = 5
 N_CATEGORIES = 3
@@ -42,13 +45,11 @@ if 'activities' not in st.session_state:
 a.authenticate()
 
 #User history
-if st.session_state['user'] != 0:
-  st.title('Your personal history:')
+if st.session_state['authentication_status']:
+  st.title('Episodes you gave a 👍:')
   df_personal = df_activity[df_activity.user_id == st.session_state['user']]
-  likes = df_personal['content_id']
-  for like in likes:
-    st.subheader('You liked episode: ' + str(like))
-
+  df_liked_episodes = df.merge(df_personal, on='content_id')
+  t.recommendations(df_liked_episodes)
 
 # Iterate over the categories
 for category in df.category.unique()[:N_CATEGORIES]:
