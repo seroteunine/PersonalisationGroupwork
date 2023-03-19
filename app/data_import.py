@@ -13,21 +13,35 @@ def data_import_bbc():
     df = pd.concat([pd.read_pickle(os.path.join(DATA_DIR, x)) for x in os.listdir(DATA_DIR) if x.endswith('.pkl')])
     # Replace missing values
     df.replace(DATA_MISSING, '', inplace=True)
-    df.loc[df.isnull().sum()] 
+    #df.loc[df.isnull().sum()] 
     # Clean data types
     df['first_broadcast'] = pd.to_datetime(['-'.join(x.split(' ')[-3:]) for x in df['first_broadcast']], infer_datetime_format=True) # Convert to datetime
     df.loc[df['first_broadcast'].isnull(), 'first_broadcast'] = pd.to_datetime('01-01-1900', infer_datetime_format=True) # Replace missing values with 1900-01-01
     df['duration_sec'] = df['duration_sec'].replace('', 0).astype(int) # Convert to int, replace missing values with 0
     df['image'] = df['image'].replace('', os.path.join(DATA_DIR, 'missing_image.png')) # Replace missing values with placeholder image
-    # Create new columns
-    df['episode'] = [' '.join(x.split('-')[1:]) for x in df['title']]
-    df['title'] = [x.split('-')[0] for x in df['title']]
+    df.sort_values(by='first_broadcast', inplace=True) # Sort by date
+    # Extract datetime features
     df['year'] = df['first_broadcast'].dt.year
     df['month'] = df['first_broadcast'].dt.month
     df['day'] = df['first_broadcast'].dt.day
     df['decennia'] = np.round(df['year'], -1).astype(int)
     df['duration_min'] = df['duration_sec'] / 60
     df['duration_hour'] = df['duration_min'] / 60
+    # Convert title to show, season, episode
+    df['show'] = [re.split(' - ', x, maxsplit=1)[0] for x in df['title']] # Extract show name
+    df['episode_title'] = [x.replace(y.strftime('%d/%m/%Y'), '') for x,y in zip(df['title'], df['first_broadcast'])] # Remove date from title
+    df['episode_title'] = [re.split(' - ', x, maxsplit=1) for x in df['title']] # Extract episode name
+    df['episode_title'] = df['episode_title'].map(lambda x: x[1] if len(x) > 1 else '').map(lambda x: x.split('.')[-1] if '.' in x else x).map(lambda x: x if len(x)>2 else '') # Clean episode title
+    #df['episode_title'] = [' '.join(re.findall(r'\w+', t.replace(s, ''))) for t, s in zip(df['title'], df['show'])] # Extract episode title by removing show name
+    df['season'] = [re.findall(r'Series (\d+)', x) for x in df['title']] # Extract season number
+    df['season'] = df['season'].map(lambda x: x[0] if len(x) > 0 else '').replace('', 0).astype(int) # Convert to int, replace missing values with 0
+    df['episode'] = [re.findall(r'\d+', re.split(': ', x)[-1]) for x in df['title']] # Extract episode number 
+    df['episode'] = df['episode'].map(lambda x: x[-1] if len(x) > 0 else '').replace('', 0).astype(int) # Convert to int, replace missing values with 0
+    # Episode number + total
+    df['episode_n'] = df.groupby(['show']).cumcount() # Episode number cumulative
+    total = df.groupby('show').max('episode_n')['episode_n'].rename('episode_n_total') # Total number of episodes for each show
+    df = df.merge(total, on='show', how='left') # Merge with df
+    # Clean up the dataframe + add index as content_i d
     df.reset_index(drop=True, inplace=True)
     df['content_id'] = df.index 
     df = df.drop_duplicates()

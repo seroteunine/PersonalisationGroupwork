@@ -8,14 +8,14 @@ from random import random
 N_ITEMS = 5
 N_CATEGORIES = 5
 IMAGE_SIZE = 350
-RECOMMENDER_METHODS = ( 'Views', 'Likes', 'Title', 'Recent','Random', 'Personalised', 'Collaborative filtering', 'Hybrid')
+RECOMMENDER_METHODS = ( 'Views', 'Likes', 'Title', 'Date', 'Episode Amount', 'Random', 'Personalised', 'Collaborative filtering', 'Hybrid')
 CUSTOM_CATEGORIES = {
   'Episodes you liked' : 'Like episode', 
-  'Episodes you recently watched' : 'View episode'
+  'Episodes you watched' : 'View episode'
 }
 EMOJIS = {
     'Episodes you liked' : ':thumbsup:',
-    'Episodes you recently watched' : ':eyes:',
+    'Episodes you watched' : ':eyes:',
     'Arts' : ':art:',
     'Comedy' : ':laughing:',
     'Documentary' : ':newspaper:',
@@ -37,16 +37,20 @@ EMOJIS = {
 def tile_item(column, item:dict):
   # add an view activity to the session state
   with column:
-    title = item['title'] #.split('-')[0]
     message = f"Views: {item['views']}  |  Likes: {item['likes']}  |  Dislikes: {item['dislikes']} "
     # NOTE: use_column_width=True <- causes issues with image size for me, fix with something like width=IMAGE_SIZE?
     # NOTE: fixed width/column required for horizontal layout with less than 3 columns
     st.image(item['image'], caption=message, width=IMAGE_SIZE)
-    st.subheader(title)
-    info = item['episode']
-    if info!='':
+    #st.subheader(item['title']) # original title
+    st.subheader(item['show'] + ' - ' + item['episode_title'])
+    info = str(item['first_broadcast'].date())
+    s, e = item['season'], item['episode']
+    if s!=0 or e!=0:
       info += ' | '
-    info += str(item['first_broadcast'].date())
+    if s!=0:
+      info += f"Season {s} "
+    if e!=0:
+      info += f"Episode {e} ({item['episode_n_total']} total)"
     st.caption(info)
     st.caption(item['description'])
     # view, like, dislike counter
@@ -65,11 +69,15 @@ def save_activities():
 
 # function that processes an activity
 def activity(id:str, activity:str, login_required:bool=True):
-  user_id = st.session_state['user']
+  user_id = str(st.session_state['user'])
   # check if user is logged in
   if login_required and user_id==0:
-      st.info('You need to be logged in to do that!')
-      return
+    st.info('You need to be logged in to do that!')
+    return
+  # check if the activity is already in the session state
+  if any([a['user_id']==user_id and a['activity']==activity and a['content_id']==id for a in st.session_state['activities']]):
+    st.info('You have already like/disliked this video!')
+    return
   data = {'content_id': id, 'activity': activity, 'user_id': user_id, 'datetime': str(datetime.datetime.now())}
   # add to the session state
   st.session_state['activities'].append(data)

@@ -44,7 +44,7 @@ if st.session_state['authentication_status']:
 # Video categories
 # Sidebar for selecting recommendation method
 with st.sidebar:
-  N_CATEGORIES = st.slider('Number of categories', min_value=1, max_value=15, value=t.N_CATEGORIES, step=1)
+  N_CATEGORIES = st.slider('Number of categories', min_value=1, max_value=len(categories), value=t.N_CATEGORIES, step=1)
   st.text('Select recommendation method:')
   recommender_method = st.radio('Recommender system method', t.RECOMMENDER_METHODS)
   sort_ascending = st.checkbox('Sort ascending', value=False)
@@ -63,10 +63,12 @@ for category in categories[:N_CATEGORIES]:
       df_subset = df_subset.sort_values(by='likes', ascending=sort_ascending)
     elif recommender_method=='Title':
       df_subset = df_subset.sort_values(by='title', ascending=sort_ascending)
-    elif recommender_method=='Recent':
+    elif recommender_method=='Date':
       df_subset = df_subset.sort_values(by='first_broadcast', ascending=sort_ascending)
+    elif recommender_method=='Episode Amount':
+      df_subset = df_subset.sort_values(by='episode_n', ascending=sort_ascending)
     elif recommender_method=='Random':
-      df_subset = df_subset.sample(n=t.N_ITEMS)  
+      df_subset = df_subset.sample(frac=1) 
       
     # actual recommendation techniques
     elif recommender_method=='Personalised':
