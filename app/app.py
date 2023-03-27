@@ -12,16 +12,27 @@ st.title('BBC Video Recommender System - University Utrecht')
 st.markdown('This is a demo of a video recommender system for the BBC.')
 
 # Import data and create content_id
-df = data_import()
+@st.cache_data
+def static_df_import():
+  return data_import()
+  
+df = static_df_import()
+
 #st.title('Video Library :tv:')
 categories = df.category.unique().tolist()
 # Control the offset for different categories
 if 'category_offset' not in st.session_state:
   st.session_state['category_offset'] = {cat:0 for cat in categories + list(t.CUSTOM_CATEGORIES.keys())}
 
-# Load users and activities
+# Load activities
 df_activity = pd.read_json('activities_generated.json')
-df_users = pd.read_json('users_generated.json')
+
+#Load users statically
+@st.cache_data
+def load_users():
+  return pd.read_json('users_generated.json')
+
+df_users = load_users()
 
 # create a session state
 if 'user' not in st.session_state:

@@ -56,7 +56,7 @@ def data_import():
     # Load BBC video dataset
     df = data_import_bbc()
     # Load users and activities
-    df_activity = pd.read_json('activities.json')
+    df_activity = pd.read_json('activities_generated.json')
     # calculate the number of likes, dislikes and views per episode and merge with the df
     for activity, column_name in zip(['Like episode', 'Dislike episode', 'View episode'], ['likes', 'dislikes', 'views']):
         counted = aggregate_activity(df_activity, activity, column_name)
