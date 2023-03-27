@@ -7,7 +7,7 @@ from random import random
 # Constants
 N_ITEMS = 5
 N_CATEGORIES = 5
-IMAGE_SIZE = 350
+IMAGE_SIZE = 250
 RECOMMENDER_METHODS = ( 'Views', 'Likes', 'Title', 'Date', 'Episode Amount', 'Random', 'Personalised', 'Collaborative filtering', 'Hybrid')
 CUSTOM_CATEGORIES = {
   'Episodes you liked' : 'Like episode', 
@@ -64,7 +64,7 @@ def tile_item(column, item:dict):
       
 # save the activities as a file
 def save_activities():
-  with open('activities.json', 'w') as outfile:
+  with open('activities_generated.json', 'w') as outfile:
     json.dump(st.session_state['activities'], outfile)
 
 # function that processes an activity

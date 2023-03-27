@@ -5,7 +5,7 @@ import pandas as pd
 def authenticate():
 
 	#0. Load users
-	df_users = pd.read_json('users.json')
+	df_users = pd.read_json('users_generated.json')
 	
 	#1. retrieve user credentials
 	credentials = {'usernames':{}}

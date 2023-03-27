@@ -20,8 +20,8 @@ if 'category_offset' not in st.session_state:
   st.session_state['category_offset'] = {cat:0 for cat in categories + list(t.CUSTOM_CATEGORIES.keys())}
 
 # Load users and activities
-df_activity = pd.read_json('activities.json')
-df_users = pd.read_json('users.json')
+df_activity = pd.read_json('activities_generated.json')
+df_users = pd.read_json('users_generated.json')
 
 # create a session state
 if 'user' not in st.session_state:
