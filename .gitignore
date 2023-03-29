@@ -1,2 +1,11 @@
 __pycache__/
 .DS_Store
+gpt_source.docx
+gpt.xlsx
+app/__pycache__/authenticate.cpython-310.pyc
+app/__pycache__/data_import.cpython-310.pyc
+app/__pycache__/template.cpython-310.pyc
+data/gpt.csv
+app/__pycache__/authenticate.cpython-310.pyc
+app/__pycache__/data_import.cpython-310.pyc
+app/__pycache__/template.cpython-310.pyc

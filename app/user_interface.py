@@ -4,14 +4,14 @@ import pandas as pd
 import datetime
 from random import random
 # Custom modules
-from data_import import json_dump, FILE_ACTIVITY, FILE_POLITICAL, FILE_POLARIZING
+from data_import import json_dump, FILE_ACTIVITY, FILE_POLITICAL, FILE_POLARIZING, FILES
 
 # Constants
 N_ITEMS = 5 # Number of items to show in the UI (per category)
 N_CATEGORIES = 7 # Number of categories to show in the UI
 # Sort/filter options for the recommender system
 RECOMMENDER_METHODS = ('Views', 'Likes', 'Title', 'Date', 'Episode Amount', 'Random', \
-                       'Political', 'Polarization', 'Personalised', 'Collaborative filtering', 'Hybrid')
+                       'Political', 'Polarization', 'Political + Polarization', 'Personalised', 'Collaborative filtering', 'Hybrid')
 # Custom categories for logged in users
 CUSTOM_CATEGORIES = {
   'Episodes you liked' : 'Like episode', 
@@ -38,8 +38,16 @@ EMOJIS = {
     'Signed' : ':pencil2:',
 }
 
+# Table containing the word scores for the different files
+def item_match_score(item:dict, word_scores:dict, file:str='polarizing_words_chatgpt', method:str='tf_idf'):
+    file_name = file + '_' + method
+    scores = word_scores[file_name].iloc[item['content_id']]
+    words_found = scores[scores > 0]
+    words_found.name = file_name
+    st.table(words_found)
+
 # Show a single item card (episode) in a column based on a record from the dataframe
-def tile_item(column, item:dict, debug:bool=False):
+def tile_item(column, item:dict, word_scores:dict, debug:bool=False):
   with column:
     # Image with caption
     message = f"Views: {item['views']}  |  Likes: {item['likes']}  |  Dislikes: {item['dislikes']}"
@@ -84,7 +92,10 @@ def tile_item(column, item:dict, debug:bool=False):
     if debug:
       # Display the political and polarizing words
       st.caption(f"Political: {item[f'{FILE_POLITICAL}_count']}  |  Polarizing: {item[f'{FILE_POLARIZING}_count']}  |  Total: {item['word_count']}")
-      st.caption(f"Political tf_idf: {item[f'{FILE_POLITICAL}_tf_idf']:0.3f}  |  Polarizing tf_idf: {item[f'{FILE_POLARIZING}_tf_idf']:0.3f}")
+      st.caption(f"Political tf_idf: {item[f'{FILE_POLITICAL}_tf_idf']:0.3f}  |  Polarizing tf_idf: {item[f'polarizing_words_tf_idf']:0.3f}  |  Polarizing tf_idf chatgpt: {item[f'polarizing_words_chatgpt_tf_idf']:0.3f}")
+      st.caption(f"Political + Polarization: {item['score']:0.3f}")
+      for file in FILES:
+        item_match_score(item, word_scores, file)
       
 # function that processes an activity
 def activity(id:str, activity:str, data="", login_required:bool=True, datetime:datetime=datetime.datetime.now()):
@@ -118,7 +129,7 @@ def category_offset(category:str, i:int, i_max:int):
   st.session_state['category_offset'][category] = val
 
 # recommend items based on the session state
-def recommendations(df:pd.DataFrame, debug:bool=False):
+def recommendations(df:pd.DataFrame, word_scores:dict, debug:bool=False):
   # Select the first N_ITEMS per category/row in UI
   category = df['category'].iloc[0]
   offset = st.session_state['category_offset'].get(category, 0)
@@ -134,7 +145,7 @@ def recommendations(df:pd.DataFrame, debug:bool=False):
     # convert df rows to dict lists
     items = df_temp.to_dict(orient='records')
     # apply tile_item to each column-item tuple (created with python 'zip')
-    any(tile_item(x[0], x[1], debug=debug) for x in zip(columns, items))
+    any(tile_item(column=x[0], item=x[1], word_scores=word_scores, debug=debug) for x in zip(columns, items))
     # navigation buttons
     max_offset = len(df)-N_ITEMS
     col1, col2, col3, col4, col5 = st.container().columns([4, 1, 1, 1, 4])

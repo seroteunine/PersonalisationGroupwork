@@ -8,7 +8,7 @@ import numpy as np
 import streamlit as st
 from bs4 import BeautifulSoup   
 # Custom modules
-from text_analysis import tf_idf
+from text_analysis import tf_idf, generate_word_score
 
 # Constants to be used in the app (modules)
 DATA_DIR = '../data'
@@ -95,50 +95,6 @@ def data_import_bbc():
     df = df.drop_duplicates()
     return df
 
-# Generate a dataframe with the number of times each word occurs in the descriptions
-def generate_word_score(df:pd.DataFrame, method:str="tf_idf", overwrite:bool=False, file_name = 'polarizing_words', remove_zero:bool=True) -> pd.DataFrame:
-    # Define the file paths
-    file_path = os.path.join(DATA_DIR, file_name + '.csv')
-    file_path_new = os.path.join(DATA_DIR, f"{file_name}_{method}.csv")
-    # Check if the file already exists and if not, generate it
-    if os.path.exists(file_path_new) and not overwrite:
-        return pd.read_csv(file_path_new)    
-    print(f"Generating scores for {file_name} using {method} for {len(df)} observations...") 
-    
-    # Import the words we want to match/score/count
-    words = pd.read_csv(file_path)
-    # Convert to a list of lowercased words
-    words = list(set(words['word'].str.lower())) 
-    
-    # Concatenate all text and remove punctuation
-    corpus_combined = df['text'].str.cat(sep=' ') 
-    corpus_combined = re.sub(r'[^\w\s]','',corpus_combined) 
-    # Split into lowercased words
-    text_combined = corpus_combined.lower().split(' ')
-    
-    # Find the intersection between the words in the text and the words
-    intersection = set(text_combined).intersection(words) 
-    p, t = len(intersection), len(words)
-    print(f"{p/t:.2%} of the words are both in the text and in the word list ({p}/{t})") 
-    
-    if method=="tf_idf":
-        # Use the function to calculate the tf-idf scores and sum the scores (of all words) for each observation
-        df_new = tf_idf(corpus=df['text'],words=words)
-        
-    elif method=="count":
-        # Count the number of times each word occurs in the text
-        text = [df["text"].str.count(word) for word in words]
-        df_new = pd.concat(text, axis=1) # combine to dataframe
-        df_new.columns = words
-        # Remove no words found
-        if remove_zero:
-            word_found = df_new.sum(axis=0) > 0
-            df_new = df_new.loc[:, word_found]
-        
-    # Save the results
-    df_new.to_csv(file_path_new, index=False)
-    return df_new
-
 # calculate the number of likes per episode and merge with the df
 def aggregate_activity(df_activity:pd.DataFrame, activity:str, column_name:str, overwrite:bool=False) -> pd.DataFrame:
     file_path = os.path.join(DATA_DIR, f"aggregate_{column_name}.csv")
@@ -193,7 +149,7 @@ def data_import(overwrite_text:bool=False, overwrite_activity:bool=False) -> tup
             df_new_total = df_new.sum(axis=1).reset_index().rename(columns={'index':'content_id', 0: column_name})
             # Combine the aggregated dataframe
             df = df.merge(df_new_total, on='content_id', how='left')
-   
+    
     # Decide on polarity warning based on outlier detection of the tf-idf scores
     print("Calculating polarity warning...")
     tf_idf_files = [f"{file_name}_tf_idf" for file_name in FILES]
@@ -202,6 +158,7 @@ def data_import(overwrite_text:bool=False, overwrite_activity:bool=False) -> tup
         sd =  df[check].std() # Standard deviation
         df[FILES[idx]] = df[check].apply(lambda x: 1 if x > mu + FILTER_THRESHOLD*sd else 0) # 1 if outlier
     df['score'] = df[tf_idf_files].sum(axis=1) # Sum the scores
+    
     # Save the data to disk for anyone who is interested in using it    
     df.to_csv(os.path.join(DATA_DIR, 'df.csv'), index=False)
     return df, df_activity, df_users, word_scores 
@@ -219,8 +176,8 @@ def data_import(overwrite_text:bool=False, overwrite_activity:bool=False) -> tup
 
 # Runtime for updating the data
 if __name__ == '__main__':
-    # Set overwrite=True to regenerate the data cache, e.g. if you have added new words to the csv files or generated new data
-    df, df_activity, df_users, word_scores = data_import(overwrite_text=True, overwrite_activity=True) 
+    # Set overwrite=False to use the cached data on disk (faster)
+    df, df_activity, df_users, word_scores = data_import(overwrite_text=False, overwrite_activity=False) 
     
 # Test code
 if __name__ == '__test__':
@@ -228,8 +185,8 @@ if __name__ == '__test__':
     # Test the data import
     df = data_import_bbc()
     
-    # Set overwrite=False to use the cached data on disk (faster)
-    df, df_activity, df_users, word_scores = data_import(overwrite_text=False, overwrite_activity=False) 
+    # Set overwrite=True to regenerate the data cache, e.g. if you have added new words to the csv files or generated new data
+    df, df_activity, df_users, word_scores = data_import(overwrite_text=True, overwrite_activity=True) 
     print(df.columns)   
     print(df.head())
     # We can access the detailed word scores by accessing the dictionary

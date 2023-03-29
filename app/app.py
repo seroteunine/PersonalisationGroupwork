@@ -91,7 +91,9 @@ for category in tqdm(categories[:N_CATEGORIES]):
       df_subset = df_subset.sort_values(by=f'{FILE_POLARIZING}_tf_idf', ascending=sort_ascending)
     elif recommender_method=='Political':
       df_subset = df_subset.sort_values(by=f'{FILE_POLITICAL}_tf_idf', ascending=sort_ascending)
-      
+    elif recommender_method=='Political + Polarization':  
+      df_subset = df_subset.sort_values(by="score", ascending=sort_ascending)
+  
     # actual recommendation techniques
     elif recommender_method=='Personalised':
       print(f"NOT IMPLEMENTED: {recommender_method}")
@@ -101,7 +103,7 @@ for category in tqdm(categories[:N_CATEGORIES]):
       print(f"NOT IMPLEMENTED: {recommender_method}")
           
     # Create streamlit components (category + navigation buttons)
-    ui.recommendations(df=df_subset, debug=DEBUG)
+    ui.recommendations(df=df_subset, word_scores=word_scores, debug=DEBUG)
 
 if N_CATEGORIES < len(categories):
   st.subheader(f"**{len(categories)-N_CATEGORIES} more categories...**")
