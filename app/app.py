@@ -9,6 +9,8 @@ from data_import import data_import, FILE_POLITICAL, FILE_POLARIZING
 
 # Streamlit setup
 st.set_page_config(layout="wide")
+
+# Title
 st.title('BBC Video Recommender System :tv:')
 st.markdown('This is a demo of a video recommender system for the BBC  - University Utrecht.')
 

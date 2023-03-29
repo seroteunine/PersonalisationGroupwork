@@ -36,6 +36,7 @@ def webscrape_poltical_words(overwrite:bool=False) -> pd.DataFrame:
     if os.path.exists(file_path) and not overwrite:
         return pd.read_csv(file_path)    
     print("Downloading political words...")
+    
     data = requests.get('https://relatedwords.io/politics').content
     soup = BeautifulSoup(data, 'html.parser')
     words = [x.text.replace('\n', '', ) for x in soup.find_all('span', class_='term')]
@@ -45,7 +46,7 @@ def webscrape_poltical_words(overwrite:bool=False) -> pd.DataFrame:
 
 # Data import imports the data from the pickle files and cleans it to be used in the app
 def data_import_bbc():
-    print("Importing data from pickle files...")
+    print("Importing data from pickled files...")
     # Combine the pickled dataframes into one
     df = pd.concat([pd.read_pickle(os.path.join(DATA_DIR, x)) for x in os.listdir(DATA_DIR) if x.endswith('.pkl')])
     df.replace(DATA_MISSING, '', inplace=True) # Replace missing values with empty string for now
@@ -102,7 +103,7 @@ def generate_word_score(df:pd.DataFrame, method:str="tf_idf", overwrite:bool=Fal
     # Check if the file already exists and if not, generate it
     if os.path.exists(file_path_new) and not overwrite:
         return pd.read_csv(file_path_new)    
-    print(f"Importing scores for {file_name} using {method}...") 
+    print(f"Generating scores for {file_name} using {method} for {len(df)} observations...") 
     
     # Import the words we want to match/score/count
     words = pd.read_csv(file_path)
@@ -118,7 +119,6 @@ def generate_word_score(df:pd.DataFrame, method:str="tf_idf", overwrite:bool=Fal
     # Find the intersection between the words in the text and the words
     intersection = set(text_combined).intersection(words) 
     p, t = len(intersection), len(words)
-    print(f"\nGenerating the {method} scores for {len(df)} observations") 
     print(f"{p/t:.2%} of the words are both in the text and in the word list ({p}/{t})") 
     
     if method=="tf_idf":
@@ -145,7 +145,7 @@ def aggregate_activity(df_activity:pd.DataFrame, activity:str, column_name:str, 
     # Check if the file already exists and if not, generate it
     if os.path.exists(file_path) and not overwrite:
         return pd.read_csv(file_path)    
-    print(f"Importing aggregation of {column_name} using action {activity}...") 
+    print(f"Aggregating {column_name} using action {activity}...") 
     
     # Aggregate the number of likes, dislikes and views per episode
     df = df_activity.loc[df_activity['activity']==activity, :].groupby('content_id').count()['activity'].rename(column_name).reset_index()
@@ -170,15 +170,18 @@ def data_import(overwrite_text:bool=False, overwrite_activity:bool=False) -> tup
     # Load BBC video dataset
     df = data_import_bbc()
     # Load users and activities
+    print("Importing users and activities...")
     df_activity = pd.read_json(FILE_ACTIVITY)
     df_users = pd.read_json(FILE_USER)
     
     # calculate the number of likes, dislikes and views per episode and merge with the df
+    print("Importing aggregation of likes, dislikes and views...")
     for activity, column_name in zip(['Like episode', 'Dislike episode', 'View episode'], ['likes', 'dislikes', 'views']):
         counted = aggregate_activity(df_activity, activity, column_name, overwrite_activity)
         df = df.merge(counted, on="content_id", how="left").replace(np.nan, 0).astype({column_name: int})
     
     # iterate over file and method to add to the calculations df
+    print("Importing word scores...")
     word_scores = dict()
     for file_name in FILES:
         for method in DATA_IMPORT_METHODS:
@@ -192,11 +195,13 @@ def data_import(overwrite_text:bool=False, overwrite_activity:bool=False) -> tup
             df = df.merge(df_new_total, on='content_id', how='left')
    
     # Decide on polarity warning based on outlier detection of the tf-idf scores
-    for check in FILES:
-        mu =  df[f'{check}_tf_idf'].mean() # Mean
-        sd =  df[f'{check}_tf_idf'].std() # Standard deviation
-        df[check] = df[f'{check}_tf_idf'].apply(lambda x: 1 if x > mu + FILTER_THRESHOLD*sd else 0) # 1 if outlier
-    df['score'] = df[FILES].sum(axis=1) # Sum the scores
+    print("Calculating polarity warning...")
+    tf_idf_files = [f"{file_name}_tf_idf" for file_name in FILES]
+    for idx, check in enumerate(tf_idf_files):
+        mu =  df[check].mean() # Mean
+        sd =  df[check].std() # Standard deviation
+        df[FILES[idx]] = df[check].apply(lambda x: 1 if x > mu + FILTER_THRESHOLD*sd else 0) # 1 if outlier
+    df['score'] = df[tf_idf_files].sum(axis=1) # Sum the scores
     # Save the data to disk for anyone who is interested in using it    
     df.to_csv(os.path.join(DATA_DIR, 'df.csv'), index=False)
     return df, df_activity, df_users, word_scores 
