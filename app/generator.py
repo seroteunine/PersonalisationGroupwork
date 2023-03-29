@@ -1,22 +1,27 @@
-import json
+# Setup
 import random
 import names
-import pandas as pd
-from data_import import data_import
-df = data_import()
+from tqdm import tqdm
+# Custom modules
+from data_import import data_import, json_dump
 
-N_PERSONAS = 3 #1 = left, 2 = neutral, 3 = right
-N_USERS_PER_PERSONA = 30
+# Import data
+df, df_activity, df_users, word_scores = data_import(overwrite_text=False, overwrite_activity=False) 
+
+N_PERSONAS = int(3) #1 = left, 2 = neutral, 3 = right
+N_USERS_PER_PERSONA = int(3e3)
 
 users = []
 activities = []
 
+# User preferences
 show_titles = df['show'].unique()
 neutral_shows = ['Race Across the World', 'Do Black Lives Still Matter?','The Weakest Link', 'Luther', 'Morning Live', 'QAnon: After the Storm?', 'Why Ships Crash', 'Israel and Iran: The Hidden War', 'Scottish Parliament']
 right_shows = ['Peaky Blinders', 'Top Gear', 'The Apprentice', "Dragons' Den", 'Panorama', "The Apprentice: You're Fired"]*2 + neutral_shows
 left_shows = ['The Green Planet', 'Universe', 'Take a Hike', 'Turkey with Simon Reeve', 'Africa', 'The Blue Planet']*2 + neutral_shows
 combined = [left_shows, neutral_shows, right_shows]
 
+# Generate a single activity based on pre-defined logic/personas
 def generate_activity(id, persona, activity):
     #Get show
     rand = random.random()
@@ -49,9 +54,9 @@ def generate_activity(id, persona, activity):
 
     return activity
 
-
+# Generate users and activities
 for persona in range(N_PERSONAS):
-  for user in range(N_USERS_PER_PERSONA):
+  for user in tqdm(range(N_USERS_PER_PERSONA)):
     #Create userdata
     id = user + persona * N_USERS_PER_PERSONA + 1
     data = {'name': names.get_first_name() + str(id), 'id': id, 'password': 'recommender'}
@@ -59,17 +64,10 @@ for persona in range(N_PERSONAS):
     #Create user activity
     activity = []
     for n in range(random.randint(10, 50)):
-      generate_activity(id, persona, activity)
+      new_activity = generate_activity(id, persona, activity)
     activities.extend(activity)
     users.append(data)
 
-def save_activities():
-  with open('activities_generated.json', 'w') as outfile: 
-    json.dump(activities, outfile)  
-
-def save_users():
-  with open('users_generated.json', 'w') as outfile:    
-    json.dump(users, outfile)
-
-save_activities()
-save_users()
+# Write to disk as json
+json_dump(users, 'users_generated.json')
+json_dump(activities, 'activities_generated.json')

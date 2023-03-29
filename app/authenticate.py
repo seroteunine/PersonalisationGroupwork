@@ -2,11 +2,11 @@ import streamlit as st
 import streamlit_authenticator as stauth
 import pandas as pd
 
-def authenticate():
+#from data_import import FILE_USER
 
-	#0. Load users
-	df_users = pd.read_json('users_generated.json')
-	
+def authenticate(df_users):
+
+	st.session_state['authentication_status'] = None
 	#1. retrieve user credentials
 	credentials = {'usernames':{}}
 
