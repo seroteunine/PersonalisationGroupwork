@@ -24,11 +24,11 @@ combined = [left_shows, neutral_shows, right_shows]
 def generate_activity(id, persona, activity):
     #Get show
     if persona == 'left':
-       persona = 1
+       persona = 0
     elif persona == 'right':
-       persona = 3
-    else:
        persona = 2
+    else:
+       persona = 1
 
     rand = random.random()
     if rand < 0.1: #Choose random show to watch
@@ -61,7 +61,11 @@ def generate_activity(id, persona, activity):
     return activity
 
 def getVote(age):
-   return 'left'
+   pLabour = -0.6 * age + 52
+   pCons = 0.8 * age -3.6
+   pCentre = -0.2 * age + 51.6
+   vote = random.choices(['left', 'centre', 'right'], weights = [pLabour, pCentre, pCons])
+   return vote[0]
 
 # Generate users and activities
 for user in range(N_USERS):
