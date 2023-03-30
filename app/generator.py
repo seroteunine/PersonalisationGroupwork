@@ -7,7 +7,6 @@ from data_import import data_import, json_dump
 # Import data
 df, df_activity, df_users, word_scores = data_import(overwrite_text=False, overwrite_activity=False) 
 
-#N_PERSONAS = int(3) #1 = left, 2 = neutral, 3 = right
 N_USERS = int(100)
 
 users = []
@@ -21,15 +20,15 @@ left_shows = ['The Green Planet', 'Universe', 'Take a Hike', 'Turkey with Simon 
 combined = [left_shows, neutral_shows, right_shows]
 
 # Generate a single activity based on pre-defined logic/personas
-def generate_activity(id, persona, activity):
-    #Get show
-    if persona == 'left':
+def generate_activity(id, age, vote, activity):
+    if vote == 'left':
        persona = 0
-    elif persona == 'right':
+    elif vote == 'right':
        persona = 2
     else:
        persona = 1
 
+    #Select a random show
     rand = random.random()
     if rand < 0.1: #Choose random show to watch
         show = random.sample(show_titles.tolist(), 1)
@@ -45,11 +44,11 @@ def generate_activity(id, persona, activity):
        random_episode = df_show.sample()
        content_id = int(random_episode['content_id'])
 
-    #Save episode as watched
+    #Add episode as being watched to activity of that user
     new_activity = {'content_id': content_id, "activity": "View episode", "user_id": id, "datetime": "2023-02-26 17:50:01.051431"}
     activity.append(new_activity)
 
-    #Sometimes like or dislike
+    #Like or dislike occasionaly
     rand = random.random()
     if rand < 0.5:
         new_activity = {'content_id': content_id, "activity": "Like episode", "user_id": id, "datetime": "2023-02-26 17:50:01.051431"}
@@ -58,7 +57,7 @@ def generate_activity(id, persona, activity):
         new_activity = {'content_id': content_id, "activity": "Dislike episode", "user_id": id, "datetime": "2023-02-26 17:50:01.051431"}
         activity.append(new_activity)
 
-    return activity
+    return
 
 def getVote(age):
    pLabour = -0.6 * age + 52
@@ -85,7 +84,7 @@ for user in range(N_USERS):
     #Create user activity
     activity = []
     for n in range(random.randint(10, 50)):
-      new_activity = generate_activity(id, vote, activity)
+       generate_activity(id, age, vote, activity)
     activities.extend(activity)
     users.append(data)
 
