@@ -12,7 +12,7 @@ st.title('BBC Video Recommender System - University Utrecht')
 st.markdown('This is a demo dashboard of a video recommender system for the BBC.')
 
 # Import data
-df, df_activity, df_users, word_scores = data_import(overwrite_text=False, overwrite_activity=False) 
+df, df_activity, df_users, df_recommendation, word_scores = data_import(overwrite_text=False, overwrite_activity=False) 
 
 # Search bar functions
 search_term = st.text_input("Search for shows", "")

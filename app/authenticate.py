@@ -51,3 +51,20 @@ def authenticate(df_users):
 		# write an warning message on the sidebar
 		with st.sidebar:			
 			st.warning('Please enter your username and password in the sidebar')
+   
+   
+
+# # Define a function that modifies the session state when the user logs out
+# def on_logout():
+#     # Set the session state to the default value when the user logs out
+#     st.session_state.user = 0
+   
+#    # Register the on_logout function to be called when the user logs out
+# st.session_state['_on_logout'] = on_logout
+
+#    # Check if the user is logged in
+# if st.session_state.get('user', 0) > 0:
+#     st.write("You are logged in.")
+# else:
+#     # If the user is not logged in, call the on_logout function
+#     st.session_state['_on_logout']()

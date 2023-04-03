@@ -1,22 +1,24 @@
 # Setup
 import random
 import names
+from tqdm import tqdm
 # Custom modules
 from data_import import data_import, json_dump
 
 # Import data
-df, df_activity, df_users, word_scores = data_import(overwrite_text=False, overwrite_activity=False) 
+df, df_activity, df_users, df_recommendation, word_scores = data_import(overwrite_text=False, overwrite_activity=False) 
 
 N_USERS = int(100)
+N_ACTIVITIES = int(10)
 
 users = []
 activities = []
 
 # User preferences
 show_titles = df['show'].unique()
-neutral_shows = ['Race Across the World', 'Do Black Lives Still Matter?','The Weakest Link', 'Luther', 'Morning Live', 'QAnon: After the Storm?', 'Why Ships Crash', 'Israel and Iran: The Hidden War', 'Scottish Parliament']
-right_shows = ['Peaky Blinders', 'Top Gear', 'The Apprentice', "Dragons' Den", 'Panorama', "The Apprentice: You're Fired"]*2 + neutral_shows
-left_shows = ['The Green Planet', 'Universe', 'Take a Hike', 'Turkey with Simon Reeve', 'Africa', 'The Blue Planet']*2 + neutral_shows
+neutral_shows = ['Race Across the World', 'The Weakest Link', 'Luther', 'Morning Live', 'Why Ships Crash', 'Israel and Iran: The Hidden War', 'Scottish Parliament', 'The Media Show', 'Horrible Histories', 'My Family', 'Panorama', 'Pop Goes Northern Ireland', 'Click']
+right_shows = ['Peaky Blinders', 'Top Gear', 'The Apprentice', "Dragons' Den", 'Panorama', "The Apprentice: You're Fired", 'QAnon: After the Storm?',"China's Magic Weapon", 'The Spy Gone North', 'Rise of the Nazis', 'Watergate', 'Spotlight on the Troubles: A Secret History'] *2 + neutral_shows
+left_shows = ['The Green Planet', 'Universe', 'Take a Hike', 'Turkey with Simon Reeve', 'Africa', 'The Blue Planet', 'Do Black Lives Still Matter?', "Thatcher: A Very British Revolution", 'Inside Culture', "The Devil's Music", "The Next Step", "Andy Warhol's America", "The Century of the Self"]*2 + neutral_shows
 combined = [left_shows, neutral_shows, right_shows]
 
 # Generate a single activity based on pre-defined logic/personas
@@ -67,7 +69,7 @@ def getVote(age):
    return vote[0]
 
 # Generate users and activities
-for user in range(N_USERS):
+for user in tqdm(range(N_USERS)):
     #Create userdata
     id = user + 1
     if id <= 44: #Young generation 16-34
@@ -83,7 +85,7 @@ for user in range(N_USERS):
 
     #Create user activity
     activity = []
-    for n in range(50):
+    for n in range(N_ACTIVITIES):
        generate_activity(id, age, vote, activity)
     activities.extend(activity)
     users.append(data)

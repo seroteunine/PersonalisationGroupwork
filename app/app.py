@@ -16,12 +16,12 @@ st.markdown('This is a demo of a video recommender system for the BBC  - Univers
 
 with st.sidebar:
   # Search bar functions
-  DEBUG = st.checkbox('Debug mode', True) # Show debug messages for Development
+  DEBUG = st.checkbox('Debug mode', False) # Show debug messages for Development
 
 # Import data
 overwrite_text=False # always off because it takes a long time
 overwrite_activity=False # could be on if you want to update the activity data but it it not optimized for that
-df, df_activity, df_users, word_scores = data_import(overwrite_text=overwrite_text, overwrite_activity=overwrite_activity)
+df, df_activity, df_users, df_recommendations, word_scores = data_import(overwrite_text=overwrite_text, overwrite_activity=overwrite_activity)
 categories = df.category.unique().tolist()
 
 # Control the offset for different categories
@@ -39,16 +39,26 @@ a.authenticate(df_users=df_users)
 #User history recommendations (if logged in) are added to the recommendations dataframe
 if st.session_state['authentication_status']:
   # select the user's activities
-  df_personal = df_activity[df_activity.user_id == st.session_state['user']]
+  user_id = st.session_state.get('user', 0)
+  df_personal = df_activity[df_activity.user_id == user_id]
   # Likes + Views
   for cat_name, cat_activity in ui.CUSTOM_CATEGORIES.items():
     # create a new dataframe with the items that the user has liked or viewed
-    df_temp = df.merge(df_personal[df_personal.activity == cat_activity], on='content_id').drop_duplicates(subset=['content_id'])
+    df_temp = df.merge(df_personal.loc[df_personal.activity == cat_activity, ['content_id']], on='content_id').drop_duplicates()
     # set the category name
     df_temp['category'] = cat_name 
     # we could use append, but this would put these categories at the bottom of the list
     categories = [cat_name] + categories 
-    df = pd.concat([df_temp, df], axis=0)
+    df = pd.concat([df_temp, df], axis=0, ignore_index=True)
+    
+# Recommendations
+user_id = st.session_state.get('user', 0)
+df_recommendations_user = df_recommendations.loc[df_recommendations['user_id']==user_id, :]
+df_recommendations_user = df_recommendations_user.loc[:,['show']].merge(df, on='show', how='left')
+df_recommendations_user = df_recommendations_user.sort_values(['season','episode']).reset_index(drop=True).groupby('show').first().reset_index()
+df_recommendations_user['category'] = 'Recommended'
+categories = ['Recommended'] + categories
+df = pd.concat([df_recommendations_user, df], axis=0, ignore_index=True).reset_index(drop=True)
 
 # Sidebar for selecting recommendation method
 with st.sidebar:

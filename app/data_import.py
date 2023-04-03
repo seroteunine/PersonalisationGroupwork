@@ -18,6 +18,7 @@ DATA_MISSING_NUMERIC = 0
 # Local file settings for runtime
 FILE_USER = 'users.json' # 'users' or 'users_generated'
 FILE_ACTIVITY = 'activities_generated.json' # 'activities' or 'activities_generated'
+FILE_RECOMMENDATIONS = 'recommendations.json'
 FILE_POLITICAL = 'political_words'
 FILE_POLARIZING = 'polarizing_words_chatgpt' # 'polarizing_words' or 'polarizing_words_chatgpt'
 FILES = ['political_words', 'polarizing_words', 'polarizing_words_chatgpt'] #, 'left_wing_words_chatgpt', 'right_wing_words_chatgpt']
@@ -159,9 +160,13 @@ def data_import(overwrite_text:bool=False, overwrite_activity:bool=False) -> tup
         df[FILES[idx]] = df[check].apply(lambda x: 1 if x > mu + FILTER_THRESHOLD*sd else 0) # 1 if outlier
     df['score'] = df[tf_idf_files].sum(axis=1) # Sum the scores
     
+    # Add the recommendations for the user
+    print("Importing recommendations...")	
+    df_recommendations = pd.read_json(FILE_RECOMMENDATIONS)
+    
     # Save the data to disk for anyone who is interested in using it    
     df.to_csv(os.path.join(DATA_DIR, 'df.csv'), index=False)
-    return df, df_activity, df_users, word_scores 
+    return df, df_activity, df_users, df_recommendations, word_scores 
 
 
 
@@ -186,7 +191,7 @@ if __name__ == '__test__':
     df = data_import_bbc()
     
     # Set overwrite=True to regenerate the data cache, e.g. if you have added new words to the csv files or generated new data
-    df, df_activity, df_users, word_scores = data_import(overwrite_text=True, overwrite_activity=True) 
+    df, df_activity, df_users, df_recommendations, word_scores = data_import(overwrite_text=False, overwrite_activity=True) 
     print(df.columns)   
     print(df.head())
     # We can access the detailed word scores by accessing the dictionary

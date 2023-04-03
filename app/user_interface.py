@@ -19,6 +19,7 @@ CUSTOM_CATEGORIES = {
 }
 # Emojis for the categories (for the UI)
 EMOJIS = {
+    'Recommended' : ':tv:',
     'Episodes you liked' : ':thumbsup:',
     'Episodes you watched' : ':eyes:',
     'Arts' : ':art:',
@@ -50,9 +51,12 @@ def item_match_score(item:dict, word_scores:dict, file:str='polarizing_words_cha
 def tile_item(column, item:dict, word_scores:dict, debug:bool=False):
   with column:
     # Image with caption
+    header = item['show']
+    if item['episode_title'] != '':
+      header += ' - ' + item['episode_title']
+    st.subheader(header)
     message = f"Views: {item['views']}  |  Likes: {item['likes']}  |  Dislikes: {item['dislikes']}"
     st.image(item['image'], caption=message)
-    st.subheader(item['show'] + ' - ' + item['episode_title'])
     
     # Text below the image logic
     info = str(item['first_broadcast'].date())
@@ -133,7 +137,7 @@ def recommendations(df:pd.DataFrame, word_scores:dict, debug:bool=False):
   # Select the first N_ITEMS per category/row in UI
   category = df['category'].iloc[0]
   offset = st.session_state['category_offset'].get(category, 0)
-  df_temp = df.copy().reset_index(drop=True).loc[offset:offset+N_ITEMS-1, :]
+  df_temp = df.copy().drop_duplicates(subset=['content_id']).reset_index(drop=True).loc[offset:offset+N_ITEMS-1, :]
   # title for the category
   category_title = category + ' ' + EMOJIS.get(category, 'NO EMOJI SET')
   st.subheader(category_title, anchor=category)

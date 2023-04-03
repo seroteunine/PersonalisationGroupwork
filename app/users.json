@@ -1,3 +1,5 @@
-[{"name": "Grady1", "id": 1, "password": "recommender", "age": 34, "vote": "right"}, 
-{"name": "Charles2", "id": 2, "password": "recommender", "age": 30, "vote": "centre"}, 
-{"name": "John3", "id": 3, "password": "recommender", "age": 24, "vote": "left"}]
+[
+    {"name": "Marcel96", "id": 96, "password": "recommender", "age": 66, "vote": "right"},
+    {"name": "Nellie99", "id": 99, "password": "recommender", "age": 60, "vote": "centre"},
+    {"name": "Leonel98", "id": 98, "password": "recommender", "age": 67, "vote": "left"}
+]
